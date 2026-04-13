@@ -1,0 +1,81 @@
+
+name: VulnOps CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+
+      - name: Run migrations
+        run: |
+          cd backend
+          python manage.py migrate
+        env:
+          DATABASE_URL: sqlite:///db.sqlite3
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+
+      - name: Build Docker images
+        run: |
+          docker-compose build
+
+  test:
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: vulnops_test
+          POSTGRES_USER: vulnops
+          POSTGRES_PASSWORD: test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install and test
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          python manage.py test
+        env:
+          DATABASE_URL: postgresql://vulnops:test@localhost:5432/vulnops_test
+          SECRET_KEY: test-secret-key
