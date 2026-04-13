@@ -19,7 +19,7 @@ node_modules/
 .vite/
 
 # Environment
-.env
+
 .env.local
 
 # IDE
