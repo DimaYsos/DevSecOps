@@ -2,7 +2,9 @@ version: "3.8"
 
 services:
   proxy:
-    build: ./nginx
+    build:
+      context: ./nginx
+      dockerfile: DockerFile
     ports:
       - "8080:80"
     depends_on:
