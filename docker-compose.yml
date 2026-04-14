@@ -1,6 +1,14 @@
 version: "3.8"
 
 services:
+  proxy:
+    image: nginx:1.25-alpine
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+      - frontend
+      
   db:
     image: postgres:15-alpine
     environment:
@@ -80,13 +88,6 @@ services:
     environment:
       - VITE_API_URL=http://localhost:8080/api
 
-  proxy:
-    image: nginx:1.25-alpine
-    ports:
-      - "8080:80"
-    depends_on:
-      - backend
-      - frontend
 
   mock-mail:
     build:
